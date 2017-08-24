@@ -1,0 +1,15 @@
+aclocal.m4
+autom4te.cache/
+/bruteforce-wallet
+compile
+config.log
+config.status
+configure
+depcomp
+.deps/
+.dirstamp
+install-sh
+Makefile
+Makefile.in
+missing
+src/*.o

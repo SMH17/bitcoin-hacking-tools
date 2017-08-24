@@ -1,0 +1,23 @@
+2016-05-24 Guillaume LE VAILLANT <guillaume.le.vaillant@openmailbox.org>
+	Version 1.4.1
+	Fix a mutex in the function reading lines from the dictionary file.
+
+2015-10-31 Guillaume LE VAILLANT <guillaume.le.vaillant@openmailbox.org>
+	Version 1.4
+	Add the possibility to get the passwords from a file.
+
+2015-07-16 Guillaume LE VAILLANT <guillaume.le.vaillant@openmailbox.org>
+	Version 1.3
+	Support all the characters of the current locale (e.g. utf-8).
+
+2015-07-06 Guillaume LE VAILLANT <guillaume.le.vaillant@openmailbox.org>
+	Version 1.2
+	Print progress info when sending a USR1 signal to the process.
+
+2014-07-04 Guillaume LE VAILLANT <guillaume.le.vaillant@openmailbox.org>
+	Version 1.1
+	Add the possibility to specify the beginning and the end of the
+	password (-b and -e options).
+
+2014-06-22 Guillaume LE VAILLANT <guillaume.le.vaillant@openmailbox.org>
+	Version 1.0

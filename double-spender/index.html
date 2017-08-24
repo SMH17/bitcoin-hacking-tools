@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Bitcoin Double Spender</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <!--[if lt IE 9]>
+        <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<!-- Header -->
+<div id="top-nav" class="navbar navbar-inverse navbar-static-top">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#" style="color:#FFF;"><i class="fa fa-btc"></i> Bitcoin Double Spender</a>
+    </div>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#" data-toggle="modal" data-target="#help"><i class="fa fa-question-circle"></i> Help</a></li>
+        <li class="dropdown">
+          <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
+            <i class="fa fa-cogs"></i> <span class="caret"></span></a>
+          <div id="g-account-menu" class="dropdown-menu">
+            <div style="padding:10px;min-width:300px;">
+              <div class="form-group">
+                <label class="sr-only" for="minfee">Malicious Fee</label>
+                <div class="input-group">
+                  <div class="input-group-addon">Malicious Fee</div>
+                  <input type="text" class="form-control" id="minfee" value="0.000001">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="sr-only" for="maxfee">Normal Fee</label>
+                <div class="input-group">
+                  <div class="input-group-addon">Normal Fee</div>
+                  <input type="text" class="form-control" id="maxfee" value="0.0005">
+                </div>
+              </div>
+             </div>
+          </div>
+        </li>
+      </ul>
+  </div><!-- /container -->
+</div>
+<!-- /Header -->
+
+<div class="container" style="margin-bottom:20px;">
+    <p class="well">
+    	Note that double spending has a high likelyhood of failure, and the initial transaction may be confirmed.  <a href="#" data-toggle="modal" data-target="#help"><i class="fa fa-question-circle"></i> Help</a>
+    </p>
+    <div class="row">
+    	<div class="col-lg-12">
+            <form id="generate">
+              <div class="form-group">
+                <label class="sr-only" for="key">Private Key</label>
+                <div class="input-group">
+                  <div class="input-group-addon"><i class="fa fa-key"></i></div>
+                  <input type="text" class="form-control" id="key" placeholder="Private Key or Brain Wallet">
+                  <div class="input-group-addon" id="brainwallet" style="padding:0px; display:none;"><button type="button" class="btn btn-success btn-sm">Brain Wallet?</button></div>
+                </div>
+              </div>
+              <p id="address" class="alert alert-success" style="display:none;">
+              	Address: <span></span>
+              </p>
+              <div class="form-group">
+                <label class="sr-only" for="sendto">Send to Address</label>
+                <div class="input-group">
+                  <div class="input-group-addon"><i class="fa fa-book"></i></div>
+                  <input type="text" class="form-control" id="sendto" placeholder="Address to send to">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="sr-only" for="change">Change Address</label>
+                <div class="input-group">
+                  <div class="input-group-addon"><i class="fa fa-reply"></i></div>
+                  <input type="text" class="form-control" id="change" placeholder="*Optional* Change Address (defaults to sending address)">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="sr-only" for="amount">Amount</label>
+                <div class="input-group">
+                  <div class="input-group-addon"><i class="fa fa-btc"></i></div>
+                  <input type="text" class="form-control" id="amount" placeholder="Amount">
+                  <div class="input-group-addon" id="balance" style="cursor:pointer;">0.00 Available</div>
+                </div>
+              </div>
+              <p>
+              <button class="btn btn-success" type="submit"><i class="fa fa-cogs"></i> Generate Transactions</button>
+              </p>
+            </form>
+
+            <div id="tx1" style="display:none;">
+            <form action="https://blockchain.info/pushtx" method="POST" target="_blank">
+            <h4>Malicious Transaction (broadcast first) <button type="submit" class="btn btn-info" style="float:right;"><i class="fa fa-bullhorn"></i> Broadcast</button></h4>
+            <textarea name="tx" class="form-control" rows="3"></textarea>
+            </form>
+            </div>
+            <hr>
+            <div id="tx2" style="display:none;">
+            <form action="https://btc.blockr.io/api/v1/tx/push" method="post" target="_blank">
+            <h4>Double Spend Transaction (broadcast after goal achieved) <button type="submit" class="btn btn-info" style="float:right;"><i class="fa fa-bullhorn"></i> Broadcast</button></h4>
+            <p>You must broadcast thing transaction before the malicious transaction is confirmed</p>
+            <textarea class="form-control" rows="3" name="hex"></textarea>
+            </form>
+            </div>
+      </div>
+  </div>
+</div>
+<footer class="text-center">
+	<p><small>Use at your own risk; only with addresses contain small balances that you are willing to lose.  Suggest that you decode and check the transactions before broadcasting them.</small></p>
+	<p><small>Largely based on open source javascript provided by <a href="http://coinb.in">Coinb.in</a> | Data sourced from <a href="https://blockr.io/">Blockr.io</a> | UI based on <a href="http://getbootstrap.com/">Bootstrap</a></small></p>
+</footer>
+<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="helplabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="helplabel">Double Spend Help</h4>
+      </div>
+      <div class="modal-body">
+        <p>This tool allows you to generate two transactions using the same Bitcoins.</p>
+        <p>The first transaction will have a very low fee, and will only be accepted by a few nodes, but after some time it should make its way to the recipient.</p>
+        <p>The second transaction will have a generous fee and will be broadcast more easily to many nodes.</p>
+        <p>Publish the first transaction and wait for the recipient to receive the unconfirmed transaction.  You can then broadcast the second transaction and it should reach miners first as long as the first transaction has not yet been confirmed.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/crypto-min.js"></script>
+<script type="text/javascript" src="js/crypto-sha256.js"></script>
+<script type="text/javascript" src="js/crypto-sha256-hmac.js"></script>
+<script type="text/javascript" src="js/sha512.js"></script>
+<script type="text/javascript" src="js/ripemd160.js"></script>
+<script type="text/javascript" src="js/aes.js"></script>
+
+<script type="text/javascript" src="js/jsbn.js"></script>
+<script type="text/javascript" src="js/ellipticcurve.js"></script>
+
+<script type="text/javascript" src="js/coin.js"></script>
+<script src="js/doublespend.js"></script>
+</body>
+</html>

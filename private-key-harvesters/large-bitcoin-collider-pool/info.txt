@@ -1,0 +1,24 @@
+The Large Bitcoin Collider (LBC - a.k.a. Collision Finders Pool) is a distributed effort to find private keys to BTC addresses that have funds on them.
+Because it searches in a very specific (low-entropy) area of the private key space, any working private keys to be found are either
+result of bad RNG
+placed there intentionally
+collisions to "original" a.k.a. "right" a.k.a. "regular" private keys
+
+The last ones we are interested in. This pool is not searching for brainwallets and our mode of search makes it very unlikely we would find a "brainwallet" private key sooner than a "collision to a regular" private key. Even if we did, we would probably not recognize it as such.
+
+Project homepage: https://lbc.cryptoguru.org
+Downloads: https://lbc.cryptoguru.org/download
+Statistics: https://lbc.cryptoguru.org/stats
+Twitter: https://twitter.com/LBC_collider
+Development Server: https://svn.cryptoguru.org/ (requires auth)
+
+What this pool does is - at the moment - in its form unique and thus requires novel and often unorthodox approaches. We are aware not everybody will like these, but that's life. What we can assert, is that the pool is no malicious project to discredit or "kill" Bitcoin. This pool also is not a commercial endeavor. Before we continue to enumerate what this pool is not, let's give some examples what this pool is or what it can be:
+
+The pool is fun! While deploying the software may be hard - or even frustrating to some, people who manage it and maybe even learn something about Linux along the way, do show signs of of euphoria when talking about it. It's the ultimate hide and seek game!
+The pool is thrilling! After all, it is similar to a treasure hunt and no one knows if he's going to be successful or not. Finding something - especially after you have been told numerous times you won't - can give you quite some adrenaline rush. As can discussions with the uninitiated.
+The pool is social! Pool participants do compete, but not like miners do. Sure - the more search power you throw at the problem, the more chances you have to find something (and proportionally so), but we are all standing in front of only one huge mountain together. Some have bigger and some have smaller pickaxes - some have excavators, but all are eroding the same damn rock. And sometimes the excavators take the people with small pickaxes to the rich veins...
+The pool can be rewarding! People do compare this pools "commercial viability" to mining and we are aware of all the arguments. We think these arguments are wrong - mostly - or at least obsolete. Comparison to mining cannot be done without looking at the mining difficulty, our speed and lots of other parameters. Using your CPU for mining versus using it for collision search is a different story today, than it was 2009.
+
+
+https://lbc.cryptoguru.org/download
+https://bitcointalk.org/index.php?topic=1877935.0
