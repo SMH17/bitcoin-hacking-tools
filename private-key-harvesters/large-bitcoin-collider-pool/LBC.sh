@@ -25,7 +25,7 @@ $@
 {
 print
 "$module not found - installing it.\n";
-qx{cpan force install $module};
+qx{cpan force install $module -y};
 eval
 "use $module;";
 }
@@ -117,7 +117,7 @@ sprintf
 (
 "%4.3f",
 (
-qw($Rev: 1174 $)
+qw($Rev: 1195 $)
 )
 [
 1
@@ -252,8 +252,6 @@ new(
 max_retries =>
 30,
 
-ftp_dl_url =>
-'ftp://ftp.cryptoguru.org/LBC/',
 ssl_dl_url =>
 "$URLBASE/static/",
 server_url =>
@@ -267,7 +265,11 @@ size_block =>
 size_fblock =>
 2
 **
-24,
+24
+,
+symmetrygen =>
+0
+,
 
 testdata =>
 {
@@ -1629,15 +1631,10 @@ $exit_code,
 $ident,
 $exit_signal,
 $core_dump,
-$data_structure_ref
+$childconf_hr
 )
 =
 @_;
-$data_structure_ref
-//=
-[
-]
-;
 if
 (
 $exit_code
@@ -1650,14 +1647,42 @@ $fail
 1
 ;
 print
-"$ident just got out of the pool "
-.
-"with exit code: $exit_code and data: @$data_structure_ref\n";
+"$ident just got out of the pool with exit code: $exit_code\n";
+}
+else
+{
+$config{symmetry}
+=
+$childconf_hr
+->
+{symmetry}
+;
 }
 }
 )
 ;
 }
+
+$config{gpu_options}
+->
+{dev}
+=
+x2lr_ify(
+$config{gpu_options}
+->
+{dev}
+)
+;
+$config{gpu_options}
+->
+{nobloom}
+=
+x2hr_ify(
+$config{gpu_options}
+->
+{nobloom}
+)
+;
 
 my $loops_per_cpu
 =
@@ -1667,28 +1692,6 @@ $page_to
 )
 /
 $cpus;
-
-if
-(
-ref
-$config{gpu_options}
-->
-{dev}
-ne
-'ARRAY'
-)
-{
-$config{gpu_options}
-->
-{dev}
-=
-[
-$config{gpu_options}
-->
-{dev}
-]
-;
-}
 my $dry
 =
 0
@@ -1848,39 +1851,13 @@ $loops_per_cpu
 )
 ;
 
-if
-(
-$config{gpu_options}
-->
-{auth}
-)
-{
 push
 @gen_param,
-(
-'-g',
-'-d',
+gen_config2param(
 $gpu_device
 )
 ;
-if
-(
-$config{gpu_options}
-->
-{lws}
-)
-{
-push
-@gen_param,
-(
-'-w',
-$config{gpu_options}
-->
-{lws}
-)
-;
-}
-}
+
 my @found
 =
 (
@@ -1891,6 +1868,7 @@ my @response
 (
 )
 ;
+
 if
 (
 $dry
@@ -1930,15 +1908,26 @@ my $line
 (
 $line
 =~
-m{\Aresponse:\s(.+)\z}xms
+m{\A(S!)?response:\s(.+)\z}xms
 )
 {
+$config{symmetry}
+=
+defined
+$1
+&&
+(
+$1
+eq
+'S!'
+)
+;
 push
 @response,
 [
 split
 '-',
-$1
+$2
 ]
 ;
 _out_unbuffered(
@@ -2050,6 +2039,9 @@ $pm
 finish
 (
 0
+,
+\
+%config
 )
 if
 (
@@ -2085,6 +2077,9 @@ from =>
 $page_from,
 to =>
 $page_to,
+sym_nk =>
+$config{symmetry}
+,
 }
 )
 ;
@@ -2164,22 +2159,34 @@ cleanup_end(
 ;
 }
 
+$config{gpu_options}
+->
+{dev}
+=
+x2lr_ify(
+$config{gpu_options}
+->
+{dev}
+)
+;
+$config{gpu_options}
+->
+{nobloom}
+=
+x2hr_ify(
+$config{gpu_options}
+->
+{nobloom}
+)
+;
+
 my @bench_param
 =
 qw(-I 0000000000000000000000000000000000000000000000000000000000000001 -L 1 -c 10000);
 
-if
-(
-$config{gpu_options}
-->
-{auth}
-)
-{
 push
 @bench_param,
-(
-'-g',
-'-d',
+gen_config2param(
 $config{gpu_options}
 ->
 {dev}
@@ -2189,24 +2196,6 @@ $config{gpu_options}
 ]
 )
 ;
-if
-(
-$config{gpu_options}
-->
-{lws}
-)
-{
-push
-@bench_param,
-(
-'-w',
-$config{gpu_options}
-->
-{lws}
-)
-;
-}
-}
 
 open
 my $FH,
@@ -2227,10 +2216,14 @@ if
 @generator_output
 !=
 5
+&&
+@generator_output
+!=
+7
 )
 {
 die
-'Generator validity check failed. Expected: 5, Got: '
+'Generator validity check failed. Expected: 5 or 7, Got: '
 .
 scalar
 @generator_output
@@ -2244,6 +2237,19 @@ join
 )
 .
 "--\n";
+}
+
+if
+(
+@generator_output
+==
+7
+)
+{
+$config{symmetrygen}
+=
+1
+;
 }
 
 $bench
@@ -2271,11 +2277,30 @@ $config{size_block}
 $bench
 )
 ;
+
+if
+(
+$config{symmetrygen}
+)
+{ my $double
+=
+$keys
+*
+2
+;
 print
-"done.\nYour speed is roughly $keys keys/s per CPU core.\n";
+"done.\nYour speed is roughly $double keys/s per CPU core. (symmetry)\n"
+;
+}
+else
+{
+print
+"done.\nYour speed is roughly $keys keys/s per CPU core.\n"
+;
+}
 
 die
-"Generator speed not plausible (got $keys).\n"
+"Generator non-symmetry speed not plausible (got $keys keys/s).\n"
 if
 (
 $keys
@@ -2363,11 +2388,38 @@ m{linux}xms
 if
 (
 _has_feature(
+'avx512f'
+)
+&&
+_has_feature(
+'avx512dq'
+)
+&&
+_has_feature(
+'avx512cd'
+)
+&&
+_has_feature(
+'avx512vl'
+)
+)
+{
+$cpuarch
+=
+'skylake-avx512';
+}
+elsif
+(
+_has_feature(
 'xsavec'
 )
 &&
 _has_feature(
 'xsaves'
+)
+&&
+_has_feature(
+'avx2'
 )
 )
 {
@@ -2459,6 +2511,73 @@ cleanup_end(
 exit
 1
 ;
+}
+
+sub gen_config2param
+{
+my $gpudev
+=
+shift;
+
+my @params
+=
+(
+)
+;
+
+if
+(
+$config{gpu_options}
+->
+{auth}
+)
+{
+push
+@params,
+(
+'-g',
+'-d',
+$gpudev
+)
+;
+if
+(
+$config{gpu_options}
+->
+{lws}
+)
+{
+push
+@params,
+(
+'-w',
+$config{gpu_options}
+->
+{lws}
+)
+;
+}
+if
+(
+exists
+$config{gpu_options}
+->
+{nobloom}
+->
+{
+$gpudev
+}
+)
+{
+push
+@params,
+'-b'
+;
+}
+}
+
+return
+@params;
 }
 
 sub get_valid_generator_types
@@ -2604,8 +2723,27 @@ precision
 -2
 )
 ;
+
+if
+(
+$config{symmetry}
+)
+{
+$keys
+->
+bmul
+(
+2
+)
+;
+print
+" (did 2x the keys @ $keys Mkeys/s)\n";
+}
+else
+{
 print
 " ($keys Mkeys/s)\n";
+}
 
 return;
 }
@@ -3016,40 +3154,6 @@ print
 return;
 }
 
-sub ftp_get
-{
-my $path
-=
-shift;
-my $exec
-=
-shift
-//
-0
-;
-
-my $request
-=
-HTTP::Request
-->
-new(
-GET =>
-$config{ftp_dl_url}
-.
-$path
-)
-;
-my $response
-=
-_get_srv_response(
-$request
-)
-;
-
-return
-$response;
-}
-
 sub ssl_get
 {
 my $path
@@ -3084,37 +3188,6 @@ return
 $response;
 }
 
-sub ftp_get_process
-{
-my $path
-=
-shift;
-my $file
-=
-shift;
-
-if
-(
-!
--r $file
-)
-{
-write_file(
-$file,
-ftp_get(
-"$path$file"
-)
-)
-;
-}
-
-return
-bunzip2(
-$file
-)
-;
-}
-
 sub ssl_get_process
 {
 my $path
@@ -3146,12 +3219,22 @@ $file
 ;
 }
 
-sub ftp_update_blf
+sub ssl_update_blf
 {
-my $ftpdata_blf
+my $json
 =
-content2listref(
-ftp_get(
+JSON
+->
+new
+->
+utf8;
+my $ssldata_raw
+=
+$json
+->
+decode
+(
+ssl_get(
 'blf'
 )
 )
@@ -3162,11 +3245,17 @@ if
 (
 !
 @{
-$ftpdata_blf
+$ssldata_raw
 }
 )
 ;
 
+my $blf_parsed
+=
+parse_blf_raw(
+$ssldata_raw
+)
+;
 my $local_md5
 =
 md5_file(
@@ -3176,7 +3265,7 @@ md5_file(
 my $blf_age
 =
 get_blf_age(
-$ftpdata_blf,
+$blf_parsed,
 $local_md5
 )
 ;
@@ -3189,15 +3278,15 @@ $blf_age
 )
 ;
 
-my $newfull_on_ftp
+my $new_on_ssl
 =
-get_newest_full_on_ftp(
-$ftpdata_blf
+get_newest_blf_full_on_ssl(
+$blf_parsed
 )
 ;
-my $ftp_md5
+my $ssl_md5
 =
-$newfull_on_ftp
+$new_on_ssl
 ->
 {md5}
 ;
@@ -3210,8 +3299,8 @@ $blf_age
 )
 { my $patch
 =
-get_newest_patch_on_ftp(
-$ftpdata_blf,
+get_newest_blf_patch_on_ssl(
+$blf_parsed,
 $local_md5
 )
 ;
@@ -3231,7 +3320,7 @@ $patch
 ->
 {size}
 <
-$newfull_on_ftp
+$new_on_ssl
 ->
 {size}
 )
@@ -3248,14 +3337,14 @@ $patch
 "\n";
 my $patch_name
 =
-ftp_get_process(
+ssl_get_process(
 'blf/',
 $patch
 ->
 {file}
 ) //
 cleanup_end(
-'FTP get & unpack failed.'
+'SSL get & unpack failed.'
 )
 ;
 patch(
@@ -3274,7 +3363,7 @@ if
 (
 $patched_md5
 eq
-$ftp_md5
+$ssl_md5
 )
 {
 unlink
@@ -3296,7 +3385,7 @@ print
 'New BLF data found. '
 .
 show_dlsize(
-$newfull_on_ftp
+$new_on_ssl
 ->
 {size}
 )
@@ -3304,14 +3393,14 @@ $newfull_on_ftp
 "\n";
 my $full_name
 =
-ftp_get_process(
+ssl_get_process(
 'blf/',
-$newfull_on_ftp
+$new_on_ssl
 ->
 {file}
 ) //
 cleanup_end(
-'FTP get & unpack failed.'
+'SSL get & unpack failed.'
 )
 ;
 rename
@@ -3443,17 +3532,11 @@ $ssldata_gen
 [
 grep
 {
-my $rxname
-=
-$name;
-$rxname
-=~
-s{\+}{\\+};
 $_
 ->
 {name}
 =~
-qr{$rxname}
+qr{$name\.bz2}
 }
 @{
 $ssldata_gen
@@ -3624,11 +3707,21 @@ ssl_update_generator(
 }
 ;
 
+if
+(
+!
+defined
+$opt
+->
+{no_update}
+)
+{
 $update_status_blf
 =
-ftp_update_blf(
+ssl_update_blf(
 )
 ;
+}
 
 return
 (
@@ -3709,103 +3802,75 @@ $newest_on_ssl
 {size} };
 }
 
-sub get_newest_full_on_ftp
+sub get_newest_blf_full_on_ssl
 {
-my $ftpdata
+my $blf_data
 =
 shift
 //
 return;
 
-my $newest_date
+my @sorted_full_byname
 =
-'000000';
-my $newest_md5;
-my $newest_file;
-my $newest_size;
-
-for
-my $line
-(
+sort
+{
+$b
+->
+{full_date}
+<=>
+$a
+->
+{full_date}
+}
+grep
+{
+$_
+->
+{cat}
+eq
+'full'
+}
 @{
-$ftpdata
+$blf_data
 }
-)
-{
-if
-(
-$line
-=~
-m{(?<perms>[rwx\-]{10})\s+\d\s\d\s+\d\s+
-                       (?<size>\d+)\s
-                       (?<time>\w+\s\d+\s\d\d:\d\d)\s
-                       (?<file>.+?)\z
-                  }xms
-)
-{
-my (
-$size,
-$file
-)
-=
-(
-$+{size}
-,
-$+{file}
-)
 ;
-if
-(
-$file
-=~
-m{\A(?<date>\d{6})-(?<md5>[0-9a-f]{32})}xms
-)
-{
-my $date
+
+my $newest_blf
 =
-$+{date}
+$sorted_full_byname
+[
+0
+]
 ;
-if
-(
-$date
->
-$newest_date
-)
-{
-$newest_date
-=
-$date;
-$newest_md5
-=
-$+{md5}
-;
-$newest_file
-=
-$file;
-$newest_size
-=
-$size;
-}
-}
-}
-}
 
 return
 {
 date =>
-$newest_date,
+$newest_blf
+->
+{full_date}
+,
 md5 =>
-$newest_md5,
+$newest_blf
+->
+{full_md5}
+,
 file =>
-$newest_file,
+$newest_blf
+->
+{name}
+,
 size =>
-$newest_size
+$newest_blf
+->
+{size}
+,
 };
 }
 
-sub get_newest_patch_on_ftp
+sub get_newest_blf_patch_on_ssl
 {
-my $ftpdata
+my $blf_data
 =
 shift
 //
@@ -3814,59 +3879,53 @@ my $local_md5
 =
 shift;
 
-for
-my $line
-(
-@{
-$ftpdata
-}
-)
-{
-if
-(
-$line
-=~
-m{(?<perms>[rwx\-]{10})\s+\d\s\d\s+\d\s+
-                       (?<size>\d+)\s
-                       (?<time>\w+\s\d+\s\d\d:\d\d)\s
-                       (?<file>.+?)\z
-                  }xms
-)
-{
-my (
-$size,
-$file
-)
+my @patches
 =
-(
-$+{size}
-,
-$+{file}
-)
+grep
+{
+$_
+->
+{cat}
+eq
+'patch'
+}
+@{
+$blf_data
+}
 ;
-if
+
+for
+my $patch_hr
 (
-$file
-=~
-m{\A(?<old_md5>[0-9a-f]{32})_(?<new_md5>[0-9a-f]{32})}xms
+@patches
 )
 {
+my $old_md5
+=
+$patch_hr
+->
+{patch_old}
+;
 if
 (
 $local_md5
 eq
-$+{old_md5}
+$old_md5
 )
 {
 return
 {
 file =>
-$file,
+$patch_hr
+->
+{name}
+,
 size =>
-$size,
+$patch_hr
+->
+{size}
+,
 };
-}
-}
 }
 }
 
@@ -3875,7 +3934,7 @@ return;
 
 sub get_blf_age
 {
-my $ftpdata_lr
+my $blfs_lr
 =
 shift
 //
@@ -3891,47 +3950,145 @@ my $age
 =
 0
 ;
-SEARCH_BLF:
-for
-my $line
-(
-reverse
-@{
-$ftpdata_lr
-}
-)
-{
-if
-(
-$line
-=~
-m{(?<perms>[rwx\-]{10})\s+\d\s\d\s+\d\s+
-                       (?<size>\d+)\s
-                       (?<time>\w+\s\d+\s\d\d:\d\d)\s
-                       (?<file>\d{6}-.+?)\z
-                  }xms
-)
-{
-my $file
+my @sorted_full_byname
 =
-$+{file}
+sort
+{
+$b
+->
+{full_date}
+<=>
+$a
+->
+{full_date}
+}
+grep
+{
+$_
+->
+{cat}
+eq
+'full'
+}
+@{
+$blfs_lr
+}
 ;
+
+GET_AGE_LOOP:
+for
+my $blf_struct
+(
+@sorted_full_byname
+)
+{
 last
-SEARCH_BLF
+GET_AGE_LOOP
 if
 (
-$file
-=~
-m{$local_md5}xms
+$blf_struct
+->
+{full_md5}
+eq
+$local_md5
 )
 ;
 $age++;
 }
 
+return
+$age;
+}
+
+sub parse_blf_raw
+{
+my $blf_raw
+=
+shift;
+
+BLF_RAW_LOOP:
+for
+my $file_hr
+(
+@{
+$blf_raw
+}
+)
+{
+next
+BLF_RAW_LOOP
+if
+(
+$file_hr
+->
+{type}
+ne
+'file'
+)
+;
+
+my $name
+=
+$file_hr
+->
+{name}
+;
+
+if
+(
+$name
+=~
+m{\A(?<date>\d{6})-(?<md5>[0-9a-f]{32})}xms
+)
+{
+$file_hr
+->
+{cat}
+=
+'full';
+$file_hr
+->
+{full_date}
+=
+$+{date}
+;
+$file_hr
+->
+{full_md5}
+=
+$+{md5}
+;
+}
+elsif
+(
+$name
+=~
+m{\A(?<old_md5>[0-9a-f]{32})_(?<new_md5>[0-9a-f]{32})}xms
+)
+{
+$file_hr
+->
+{cat}
+=
+'patch';
+$file_hr
+->
+{patch_old}
+=
+$+{old_md5}
+;
+$file_hr
+->
+{patch_new}
+=
+$+{new_md5}
+;
+}
+
 }
 
 return
-$age;
+$blf_raw;
 }
 
 sub get_work
@@ -4857,13 +5014,17 @@ if
 $hits
 !=
 4
+&&
+$hits
+!=
+6
 )
 {
 unlink
 $config{benchmrk_stor}
 ;
 cleanup_end(
-"Test check failed! Expected 4 hits and got $hits!"
+"Test check failed! Expected 4 or 6 hits and got $hits!"
 )
 ;
 }
@@ -4986,7 +5147,7 @@ $opt
 ->
 {delay}
 ||
-30
+1
 )
 ;
 
@@ -5059,7 +5220,7 @@ lc
 $arg
 }
 =
-_get_params(
+_get_intset_params(
 lc
 $param
 )
@@ -5314,7 +5475,7 @@ return
 ;
 }
 
-sub _get_params
+sub _get_intset_params
 {
 my $params
 =
@@ -5334,7 +5495,7 @@ map
 {
 my $tmp
 =
-_get_params(
+_get_intset_params(
 $_
 )
 ;
@@ -6450,6 +6611,108 @@ shift
 (
 )
 }
+;
+}
+
+sub x2hr_ify
+{
+my $in_xr
+=
+shift
+//
+return
+{
+};
+
+return
+$in_xr
+if
+(
+ref
+$in_xr
+eq
+'HASH'
+)
+;
+if
+(
+ref
+$in_xr
+eq
+'ARRAY'
+)
+{
+my %seen;
+
+defined
+&&
+$seen{
+$_
+}++
+for
+(
+@{
+$in_xr
+}
+)
+;
+
+return
+\
+%seen
+;
+}
+
+return
+{
+$in_xr
+=>
+1
+}
+if
+(
+defined
+$in_xr
+&&
+!
+ref
+$in_xr
+)
+;
+
+return
+{
+};
+}
+
+sub x2lr_ify
+{
+my $arg
+=
+shift
+//
+return
+[
+]
+;
+
+return
+$arg
+if
+(
+ref
+(
+$arg
+)
+eq
+'ARRAY'
+)
+;
+
+return
+[
+$arg
+]
 ;
 }
 
