@@ -14,6 +14,10 @@ The source code of main tools used in Bitcoin "non-malware-based" attacks.
 
 - Bruteforce Wallet
 
+- Wallet Collision
+
+- ECDSA Private Key Recovery
+
 - Large Bitcoin Collider Pool Script
 
 
@@ -22,8 +26,7 @@ The source code of main tools used in Bitcoin "non-malware-based" attacks.
 Do not ask questions about how to configure or use the software.
 
 I'm not responsible for improper use of the code contained in these repositories.
-This code has been shared only for security research purpose. 
-Do not ask questions about how to configure or use the software.
+This code is mostly proof of concept and it has been shared only for security research purpose to integrate a related article. 
 No support will be provided.
 
 
@@ -43,4 +46,6 @@ POSSIBILITY OF SUCH DAMAGE.
 Related repositories:
 https://github.com/ryancdotorg/brainflayer
 https://github.com/glv2/bruteforce-wallet
-https://github.com/ankleslapper/Double-Spender/
+https://github.com/impakho/wallet-collision
+https://github.com/tintinweb/ecdsa-private-key-recovery
+https://github.com/ankleslapper/Double-Spender

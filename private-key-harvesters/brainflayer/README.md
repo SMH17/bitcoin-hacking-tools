@@ -17,8 +17,6 @@ If brainflayer is useful to you, please get in touch to let me know. I'm very
 interested in any research it's being used for, and I'm generally happy to
 collaborate with academic groups.
 
-
-
 Usage
 -----
 
@@ -117,9 +115,23 @@ Building
 --------
 
 Should compile on Linux with `make` provided you have the required devel libs
-installed (at least openssl and gpm are required along with libsecp256k1's
+installed (at least openssl and gmp are required along with libsecp256k1's
 build dependencies). I really need to learn autotools. If you file an issue
 about a build failure in libsecp256k1 I will close it.
+
+Dependencies should install with
+
+```
+apt install build-essential libgmp-dev libssl-dev
+```
+
+Supported build target is currently Ubuntu 20.04 on amd64/x86_64. Issues with
+building for other platforms probably won’t be fixed. In particular, Kali Linux
+is *not* supported. Support for operating systems other than Linux would require
+extensive refactoring of Brainflayer's memory optimizations and is not happening.
+
+Redistribution of compiled `brainflayer` binaries is prohibited, and
+unauthorized binaries probably contain malware.
 
 Authors
 -------
